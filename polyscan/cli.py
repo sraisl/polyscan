@@ -27,8 +27,11 @@ def cli() -> None:
 @click.option("--max-critical", default=0, show_default=True, help="Max critical findings before gate fails")
 @click.option("--max-high", default=0, show_default=True, help="Max high findings before gate fails")
 @click.option("--max-medium", default=50, show_default=True, help="Max medium findings before gate fails")
+@click.option("--summary", "summary_path", type=click.Path(path_type=Path), default=None,
+              help="Write a Markdown job-summary (GitHub Actions compatible)")
 def scan(target: Path, engines: tuple[str, ...], fmt: str, output: Path | None,
-          gate: bool, max_critical: int, max_high: int, max_medium: int) -> None:
+          gate: bool, max_critical: int, max_high: int, max_medium: int,
+          summary_path: Path | None) -> None:
     """Scan TARGET and report normalized findings."""
     selected = list(engines) if engines else None
     results = run_engines(target, selected)
@@ -50,8 +53,13 @@ def scan(target: Path, engines: tuple[str, ...], fmt: str, output: Path | None,
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(text)
         click.echo(f"Report written to {output}")
+        # also emit a Markdown summary for GitHub Actions job summary
+        _write_summary(output.with_name("polyscan-summary.md"), findings, gate)
     else:
         click.echo(text)
+
+    if summary_path:
+        _write_summary(summary_path, findings, gate)
 
     if gate and findings:
         g = QualityGate(max_critical=max_critical, max_high=max_high, max_medium=max_medium)
@@ -59,6 +67,42 @@ def scan(target: Path, engines: tuple[str, ...], fmt: str, output: Path | None,
         click.echo(f"\n{msg}")
         if not passed:
             raise SystemExit(1)
+
+
+def _write_summary(path: Path, findings, gate: bool) -> None:
+    """Write a Markdown summary (GitHub Actions job summary compatible)."""
+    by_sev = {s: 0 for s in Severity}
+    for f in findings:
+        by_sev[f.severity] += 1
+
+    lines = ["## 🔍 PolyScan Scan Summary", ""]
+    lines.append("| Severity | Count |")
+    lines.append("|---|---|")
+    for s in Severity:
+        lines.append(f"| {s.value} | {by_sev[s]} |")
+    lines.append("")
+
+    if findings:
+        lines.append("### Findings")
+        for f in sorted(findings, key=lambda x: -x.severity.rank)[:20]:
+            sev = f.severity.value.upper()
+            lines.append(f"- **{sev}** `{f.rule_id}` — `{f.file}:{f.line}` ({f.engine})")
+        if len(findings) > 20:
+            lines.append(f"- … and {len(findings) - 20} more")
+    else:
+        lines.append("✨ No findings. Clean code!")
+
+    if gate and findings:
+        g = QualityGate()
+        passed, msg = g.evaluate(findings)
+        lines.append("")
+        lines.append(f"**Quality Gate:** {'✅ passed' if passed else '❌ failed'}")
+        if not passed:
+            lines.append(f"> {msg}")
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("\n".join(lines))
+    click.echo(f"Summary written to {path}")
 
 
 def render_md(results, findings) -> str:

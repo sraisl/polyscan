@@ -46,7 +46,9 @@ runs:
     - "--format"
     - ${{ inputs.format }}
     - "-o"
-    - "polyscan.sarif"
+    - "$GITHUB_WORKSPACE/polyscan.sarif"
+    - "--summary"
+    - "$GITHUB_WORKSPACE/polyscan-summary.md"
     - "--max-critical"
     - ${{ inputs.max-critical }}
     - "--max-high"

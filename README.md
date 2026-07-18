@@ -127,11 +127,19 @@ jobs:
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: polyscan.sarif
+
+      - name: Job Summary
+        if: always()
+        run: cat polyscan-summary.md >> "$GITHUB_STEP_SUMMARY"
 ```
+
+The Action writes two artifacts into the runner workspace:
+- `polyscan.sarif` — consumed by `upload-sarif`
+- `polyscan-summary.md` — a Markdown report you can pipe into `$GITHUB_STEP_SUMMARY` (shown above) or post as a PR comment.
 
 Notes:
 - The Action pulls `ghcr.io/sraisl/polyscan:latest` (auto-built & pushed by this repo's CI on every `main` push).
-- Pin to a release tag (e.g. `sraisl/polyscan@v1`) — Dependabot will bump it to `@v2` automatically when released (configured with `versioning-strategy: increase`). `@main` is not tracked by Dependabot.
+- Pin to a release tag (e.g. `sraisl/polyscan@v1`) — Dependabot will bump it to `@v2` automatically when released (configued with `versioning-strategy: increase`). `@main` is not tracked by Dependabot.
 - Add `spotbugs` to `engines` for Java/Kotlin (needs a JDK on the runner; the action installs one if missing).
 
 ## Quality Gate
