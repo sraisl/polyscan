@@ -11,4 +11,3 @@ node_modules/
 tests/
 *.md
 !README.md
-uv.lock
