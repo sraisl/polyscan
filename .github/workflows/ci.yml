@@ -58,7 +58,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: PolyScan self-scan (SARIF)
-        uses: sraisl/polyscan@main
+        uses: sraisl/polyscan@v1
         with:
           target: "."
           engines: "semgrep,bandit,eslint"

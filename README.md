@@ -117,7 +117,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: PolyScan self-scan
-        uses: sraisl/polyscan@main
+        uses: sraisl/polyscan@v1
         with:
           target: "."
           engines: "semgrep,bandit,eslint"   # add "spotbugs" for Java/Kotlin
@@ -131,7 +131,7 @@ jobs:
 
 Notes:
 - The Action pulls `ghcr.io/sraisl/polyscan:latest` (auto-built & pushed by this repo's CI on every `main` push).
-- Pin to a release tag (e.g. `sraisl/polyscan@v1`) if you want Dependabot to keep it updated — `@main` is not tracked by Dependabot.
+- Pin to a release tag (e.g. `sraisl/polyscan@v1`) — Dependabot will bump it to `@v2` automatically when released (configured with `versioning-strategy: increase`). `@main` is not tracked by Dependabot.
 - Add `spotbugs` to `engines` for Java/Kotlin (needs a JDK on the runner; the action installs one if missing).
 
 ## Quality Gate
