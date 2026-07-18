@@ -24,7 +24,11 @@ def cli() -> None:
 @click.option("--output", "-o", type=click.Path(path_type=Path), default=None,
               help="Write report to file (e.g. polyscan.sarif)")
 @click.option("--gate/--no-gate", default=True, help="Apply Quality Gate (exit 1 on fail)")
-def scan(target: Path, engines: tuple[str, ...], fmt: str, output: Path | None, gate: bool) -> None:
+@click.option("--max-critical", default=0, show_default=True, help="Max critical findings before gate fails")
+@click.option("--max-high", default=0, show_default=True, help="Max high findings before gate fails")
+@click.option("--max-medium", default=50, show_default=True, help="Max medium findings before gate fails")
+def scan(target: Path, engines: tuple[str, ...], fmt: str, output: Path | None,
+          gate: bool, max_critical: int, max_high: int, max_medium: int) -> None:
     """Scan TARGET and report normalized findings."""
     selected = list(engines) if engines else None
     results = run_engines(target, selected)
@@ -50,7 +54,7 @@ def scan(target: Path, engines: tuple[str, ...], fmt: str, output: Path | None, 
         click.echo(text)
 
     if gate and findings:
-        g = QualityGate()
+        g = QualityGate(max_critical=max_critical, max_high=max_high, max_medium=max_medium)
         passed, msg = g.evaluate(findings)
         click.echo(f"\n{msg}")
         if not passed:

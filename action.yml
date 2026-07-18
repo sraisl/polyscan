@@ -18,6 +18,22 @@ inputs:
     description: "Report format (md, json, sarif)"
     required: false
     default: "sarif"
+  max-critical:
+    description: "Max critical findings before the Quality Gate fails"
+    required: false
+    default: "0"
+  max-high:
+    description: "Max high findings before the Quality Gate fails"
+    required: false
+    default: "0"
+  max-medium:
+    description: "Max medium findings before the Quality Gate fails"
+    required: false
+    default: "50"
+  gate:
+    description: "Apply the Quality Gate (exit 1 on failure)"
+    required: false
+    default: "true"
 
 runs:
   using: "docker"
@@ -31,3 +47,10 @@ runs:
     - ${{ inputs.format }}
     - "-o"
     - "polyscan.sarif"
+    - "--max-critical"
+    - ${{ inputs.max-critical }}
+    - "--max-high"
+    - ${{ inputs.max-high }}
+    - "--max-medium"
+    - ${{ inputs.max-medium }}
+    - ${{ inputs.gate == 'true' && '--gate' || '--no-gate' }}
