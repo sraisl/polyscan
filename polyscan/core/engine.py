@@ -6,12 +6,13 @@ import subprocess
 from pathlib import Path
 
 from polyscan.core.schema import EngineResult, Finding, Severity
-from polyscan.engines import semgrep, bandit, eslint
+from polyscan.engines import semgrep, bandit, eslint, spotbugs
 
 ENGINES = {
     "semgrep": semgrep,
     "bandit": bandit,
     "eslint": eslint,
+    "spotbugs": spotbugs,
 }
 
 SEVERITY_MAP = {
