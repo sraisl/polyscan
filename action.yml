@@ -36,25 +36,30 @@ inputs:
     default: "true"
 
 runs:
-  using: "docker"
-  image: "docker://ghcr.io/sraisl/polyscan:latest"
-  # GitHub mounts the repo at /github/workspace inside the container,
-  # so writing there makes artifacts visible to the runner afterward.
-  args:
-    - "scan"
-    - ${{ inputs.target }}
-    - "-e"
-    - ${{ inputs.engines }}
-    - "--format"
-    - ${{ inputs.format }}
-    - "-o"
-    - "/github/workspace/polyscan.sarif"
-    - "--summary"
-    - "/github/workspace/polyscan-summary.md"
-    - "--max-critical"
-    - ${{ inputs.max-critical }}
-    - "--max-high"
-    - ${{ inputs.max-high }}
-    - "--max-medium"
-    - ${{ inputs.max-medium }}
-    - ${{ inputs.gate == 'true' && '--gate' || '--no-gate' }}
+  using: "composite"
+  steps:
+    - name: Run PolyScan (Docker)
+      shell: bash
+      run: |
+        docker run --rm \
+          -v "$GITHUB_WORKSPACE:/out" \
+          -w /out \
+          ghcr.io/sraisl/polyscan:latest scan "${{ inputs.target }}" \
+          -e "${{ inputs.engines }}" \
+          --format "${{ inputs.format }}" \
+          -o "/out/polyscan.sarif" \
+          --summary "/out/polyscan-summary.md" \
+          --max-critical "${{ inputs.max-critical }}" \
+          --max-high "${{ inputs.max-high }}" \
+          --max-medium "${{ inputs.max-medium }}" \
+          ${{ inputs.gate == 'true' && '--gate' || '--no-gate' }}
+
+    - name: Write Job Summary
+      if: always()
+      shell: bash
+      run: |
+        if [ -f "$GITHUB_WORKSPACE/polyscan-summary.md" ]; then
+          cat "$GITHUB_WORKSPACE/polyscan-summary.md" >> "$GITHUB_STEP_SUMMARY"
+        else
+          echo "PolyScan produced no summary file." >> "$GITHUB_STEP_SUMMARY"
+        fi
