@@ -56,17 +56,9 @@ def classpath(home: Path) -> str:
     return ":".join(jars)
 
 
-def _legacy_root() -> Path | None:
-    p = Path("/root/.hermes/cache/spotbugs")
-    if (p / "dist" / f"spotbugs-{SPOTBUGS_VERSION}").exists():
-        return p
-    return None
-
-
 def resolve() -> tuple[Path, Path, str] | None:
     """Return (spotbugs_home, findsecbugs_jar, classpath) or None if missing."""
-    legacy = _legacy_root()
-    root = legacy or cache_root()
+    root = cache_root()
     home = spotbugs_home(root)
     fsb = findsecbugs_jar(root)
     if home.exists() and fsb.exists():

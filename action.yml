@@ -31,8 +31,11 @@ runs:
         pip install . polyscan
         pip install semgrep bandit
         npm install -g eslint@8
-        # optional Java engine
-        which java >/dev/null 2>&1 && polyscan download-engines || echo "java not found — skipping spotbugs"
+        # optional Java engine (needs JDK; install via apt if available)
+        if ! which java >/dev/null 2>&1; then
+          sudo apt-get update && sudo apt-get install -y openjdk-21-jdk-headless || echo "java install failed"
+        fi
+        polyscan download-engines || echo "spotbugs assets unavailable — skipping"
     - name: Run PolyScan
       shell: bash
       run: polyscan scan ${{ inputs.target }} -e ${{ inputs.engines }} --format ${{ inputs.format }} -o polyscan.sarif
