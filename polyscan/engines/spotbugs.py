@@ -8,21 +8,9 @@ from pathlib import Path
 
 from polyscan.core.schema import EngineResult, Finding, Severity
 from polyscan.engines.base import EngineAdapter
+from polyscan.engines import spotbugs_data as data
 
 CLI = "java"
-
-# bundled jars (download once, cache locally)
-SPOTBUGS_HOME = Path("/root/.hermes/cache/spotbugs/dist/spotbugs-4.8.6")
-SPOTBUGS_JAR = SPOTBUGS_HOME / "lib" / "spotbugs.jar"
-FINDSECBUGS_JAR = Path("/root/.hermes/cache/spotbugs/findsecbugs.jar")
-
-
-def _classpath() -> str:
-    if SPOTBUGS_HOME.exists():
-        jars = [str(SPOTBUGS_HOME / "lib" / "spotbugs.jar")]
-        jars += [str(p) for p in (SPOTBUGS_HOME / "lib").glob("*.jar")]
-        return ":".join(jars)
-    return str(SPOTBUGS_JAR)
 
 SEV_MAP = {
     "HIGH": Severity.HIGH,
@@ -66,13 +54,15 @@ def run(target: Path) -> EngineResult:
     findings: list[Finding] = []
     errors: list[str] = []
 
-    if not SPOTBUGS_JAR.exists():
+    resolved = data.resolve() or data.ensure()
+    if not resolved:
         return EngineResult(
             engine="spotbugs",
             findings=[],
-            errors=[f"spotbugs.jar missing at {SPOTBUGS_JAR}"],
+            errors=["spotbugs assets missing — run `polyscan download-engines`"],
             skipped=True,
         )
+    sb_home, fsb_jar, cp = resolved
 
     sources = _collect_sources(target)
     if not sources:
@@ -86,10 +76,10 @@ def run(target: Path) -> EngineResult:
 
     xml_report = target / ".polyscan_spotbugs.xml"
     cmd = [
-        "java", "-cp", _classpath(),
+        "java", "-cp", cp,
         "edu.umd.cs.findbugs.LaunchAppropriateUI",
         "-textui",
-        "-pluginList", str(FINDSECBUGS_JAR),
+        "-pluginList", str(fsb_jar),
         "-effort:max", "-xml:withMessages",
         "-output", str(xml_report),
         str(classes_dir if compiled else target),

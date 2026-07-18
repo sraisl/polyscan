@@ -21,6 +21,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
 scan = ["semgrep", "bandit", "eslint"]
+spotbugs = []  # JARs fetched at runtime via `polyscan download-engines`
 
 [project.scripts]
 polyscan = "polyscan.cli:main"

@@ -71,6 +71,19 @@ def render_md(results, findings) -> str:
     return "\n".join(lines)
 
 
+@cli.command()
+def download_engines() -> None:
+    """Download optional engine assets (SpotBugs JARs) into the cache."""
+    from polyscan.engines import spotbugs_data as data
+
+    print("Resolving cache dir:", data.cache_root())
+    ok = data.ensure(force=True)
+    if ok:
+        print("✅ SpotBugs assets ready.")
+    else:
+        raise SystemExit(1)
+
+
 def main() -> None:
     cli()
 
