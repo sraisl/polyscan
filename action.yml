@@ -38,6 +38,8 @@ inputs:
 runs:
   using: "docker"
   image: "docker://ghcr.io/sraisl/polyscan:latest"
+  # GitHub mounts the repo at /github/workspace inside the container,
+  # so writing there makes artifacts visible to the runner afterward.
   args:
     - "scan"
     - ${{ inputs.target }}
@@ -46,9 +48,9 @@ runs:
     - "--format"
     - ${{ inputs.format }}
     - "-o"
-    - "$GITHUB_WORKSPACE/polyscan.sarif"
+    - "/github/workspace/polyscan.sarif"
     - "--summary"
-    - "$GITHUB_WORKSPACE/polyscan-summary.md"
+    - "/github/workspace/polyscan-summary.md"
     - "--max-critical"
     - ${{ inputs.max-critical }}
     - "--max-high"
