@@ -11,10 +11,10 @@ class EngineAdapter:
     CLI: str = ""
 
     @staticmethod
-    def _run(args: list[str], cwd: Path | None = None) -> subprocess.CompletedProcess:
+    def _run(args: list[str], cwd: Path | None = None, env: dict | None = None) -> subprocess.CompletedProcess:
         return subprocess.run(
             args, cwd=str(cwd) if cwd else None,
-            capture_output=True, text=True, timeout=300,
+            capture_output=True, text=True, timeout=300, env=env,
         )
 
     @staticmethod
