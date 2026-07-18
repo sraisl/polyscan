@@ -26,6 +26,17 @@ pip install semgrep bandit
 npm install -g eslint
 ```
 
+### Install with uv
+
+```bash
+# create lockfile and project venv
+uv lock
+uv sync --extra dev --extra scan
+
+# eslint is a Node tool and remains npm-managed
+npm install -g eslint
+```
+
 ## Usage
 
 ```bash
@@ -43,6 +54,13 @@ polyscan scan ./myrepo --format sarif -o polyscan.sarif
 
 # CycloneDX SBOM from dependency manifests
 polyscan sbom ./myrepo -o bom.json
+```
+
+With uv:
+
+```bash
+uv run polyscan scan ./myrepo
+uv run polyscan sbom ./myrepo -o bom.json
 ```
 
 ### GitHub Action
