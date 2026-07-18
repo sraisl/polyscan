@@ -22,6 +22,7 @@ jobs:
     permissions:
       security-events: write   # needed to upload SARIF
       contents: read
+      actions: read            # needed by upload-sarif telemetry / run info
     steps:
       - uses: actions/checkout@v7
       - name: PolyScan self-scan (SARIF)
