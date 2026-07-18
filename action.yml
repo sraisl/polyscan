@@ -38,17 +38,28 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Run PolyScan (Docker)
+    - name: Install uv
+      uses: astral-sh/setup-uv@v8.3.2
+    - name: Sync PolyScan + engines (uv, locked)
       shell: bash
       run: |
-        docker run --rm \
-          -v "$GITHUB_WORKSPACE:/out" \
-          -w /out \
-          ghcr.io/sraisl/polyscan:latest scan "${{ inputs.target }}" \
+        uv sync --frozen --extra scan
+        uv pip install --system .
+        npm install -g eslint@8
+        # optional Java engine (needs JDK; install via apt if missing)
+        if ! which java >/dev/null 2>&1; then
+          sudo apt-get update && sudo apt-get install -y openjdk-21-jdk-headless || echo "java install failed"
+        fi
+        polyscan download-engines || echo "spotbugs assets unavailable — skipping"
+
+    - name: Run PolyScan
+      shell: bash
+      run: |
+        polyscan scan "${{ inputs.target }}" \
           -e "${{ inputs.engines }}" \
           --format "${{ inputs.format }}" \
-          -o "/out/polyscan.sarif" \
-          --summary "/out/polyscan-summary.md" \
+          -o "polyscan.sarif" \
+          --summary "polyscan-summary.md" \
           --max-critical "${{ inputs.max-critical }}" \
           --max-high "${{ inputs.max-high }}" \
           --max-medium "${{ inputs.max-medium }}" \
@@ -58,8 +69,8 @@ runs:
       if: always()
       shell: bash
       run: |
-        if [ -f "$GITHUB_WORKSPACE/polyscan-summary.md" ]; then
-          cat "$GITHUB_WORKSPACE/polyscan-summary.md" >> "$GITHUB_STEP_SUMMARY"
+        if [ -f polyscan-summary.md ]; then
+          cat polyscan-summary.md >> "$GITHUB_STEP_SUMMARY"
         else
           echo "PolyScan produced no summary file." >> "$GITHUB_STEP_SUMMARY"
         fi
