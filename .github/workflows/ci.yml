@@ -10,12 +10,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: "3.11"
-      - run: pip install . pytest semgrep bandit
+          enable-cache: true
+      - name: Set up Python
+        run: uv python install 3.11
+      - name: Sync dependencies (locked)
+        run: uv sync --frozen --extra dev --extra scan
       - run: npm install -g eslint@8
-      - run: pytest -q
+      - run: uv run pytest -q
 
   polyscan:
     runs-on: ubuntu-latest

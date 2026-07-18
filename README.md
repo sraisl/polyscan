@@ -20,8 +20,12 @@ applies a **Quality Gate**, and renders reports for CLI, PR comments, and a web 
 ## Install
 
 ```bash
+# with uv (recommended — uses uv.lock for reproducible installs)
+uv sync --extra dev --extra scan
+uv run polyscan scan ./myrepo
+
+# or classic pip
 pip install polyscan
-# engines (any subset):
 pip install semgrep bandit
 npm install -g eslint
 ```

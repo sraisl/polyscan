@@ -3,18 +3,23 @@ FROM python:3.11-slim
 LABEL org.opencontainers.image.title="PolyScan" \
       org.opencontainers.image.description="Lightweight multi-language SAST orchestrator"
 
-# Java for the SpotBugs engine
+# uv for locked, reproducible installs + Java for SpotBugs
 RUN apt-get update && apt-get install -y --no-install-recommends \
     openjdk-21-jdk-headless curl ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && curl -LsSf https://astral.sh/uv/install.sh | sh \
+    && ln -s /root/.local/bin/uv /usr/local/bin/uv
+
+ENV PATH="/root/.local/bin:${PATH}"
 
 WORKDIR /app
-COPY pyproject.toml README.md ./
+COPY pyproject.toml uv.lock README.md ./
 COPY polyscan ./polyscan
 
-RUN pip install --no-cache-dir . \
-    && pip install --no-cache-dir semgrep bandit \
-    && (npm install -g eslint@8 || true)
+# sync from the lockfile (reproducible), including dev/scan extras
+RUN uv sync --frozen --extra dev --extra scan \
+    && uv pip install --system . \
+    && npm install -g eslint@8 || true
 
 # Pre-fetch SpotBugs + FindSecBugs assets into the cache
 RUN polyscan download-engines

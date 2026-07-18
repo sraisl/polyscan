@@ -25,11 +25,13 @@ runs:
     - uses: actions/setup-python@v5
       with:
         python-version: "3.11"
-    - name: Install PolyScan + engines
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+    - name: Install PolyScan + engines (uv, locked)
       shell: bash
       run: |
-        pip install . polyscan
-        pip install semgrep bandit
+        uv sync --frozen --extra scan
+        uv pip install --system .
         npm install -g eslint@8
         # optional Java engine (needs JDK; install via apt if available)
         if ! which java >/dev/null 2>&1; then

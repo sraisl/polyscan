@@ -28,3 +28,6 @@ polyscan = "polyscan.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["polyscan"]
+
+[tool.uv]
+package = true
