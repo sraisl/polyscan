@@ -20,24 +20,14 @@ inputs:
     default: "sarif"
 
 runs:
-  using: "composite"
-  steps:
-    - uses: actions/setup-python@v5
-      with:
-        python-version: "3.11"
-    - name: Install uv
-      uses: astral-sh/setup-uv@v5
-    - name: Install PolyScan + engines (uv, locked)
-      shell: bash
-      run: |
-        uv sync --frozen --extra scan
-        uv pip install --system .
-        npm install -g eslint@8
-        # optional Java engine (needs JDK; install via apt if available)
-        if ! which java >/dev/null 2>&1; then
-          sudo apt-get update && sudo apt-get install -y openjdk-21-jdk-headless || echo "java install failed"
-        fi
-        polyscan download-engines || echo "spotbugs assets unavailable — skipping"
-    - name: Run PolyScan
-      shell: bash
-      run: polyscan scan ${{ inputs.target }} -e ${{ inputs.engines }} --format ${{ inputs.format }} -o polyscan.sarif
+  using: "docker"
+  image: "docker://ghcr.io/sraisl/polyscan:latest"
+  args:
+    - "scan"
+    - ${{ inputs.target }}
+    - "-e"
+    - ${{ inputs.engines }}
+    - "--format"
+    - ${{ inputs.format }}
+    - "-o"
+    - "polyscan.sarif"

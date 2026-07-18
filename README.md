@@ -67,11 +67,54 @@ uv run polyscan scan ./myrepo
 uv run polyscan sbom ./myrepo -o bom.json
 ```
 
+### Run via Docker
+
+PolyScan ships a container image (published to GHCR on every `main` push):
+
+```bash
+# pull from GHCR (auto-built by CI)
+docker pull ghcr.io/sraisl/polyscan:latest
+
+# scan a local repo — mount it at /code
+docker run --rm \
+  -v /pfad/zu/deinem/repo:/code \
+  ghcr.io/sraisl/polyscan:latest scan /code \
+  -e semgrep -e bandit -e eslint --format md
+
+# SARIF into a host volume
+docker run --rm \
+  -v /pfad/zu/deinem/repo:/code \
+  -v $(pwd)/out:/out \
+  ghcr.io/sraisl/polyscan:latest scan /code \
+  --format sarif -o /out/polyscan.sarif
+
+# SBOM
+docker run --rm \
+  -v /pfad/zu/deinem/repo:/code \
+  -v $(pwd)/out:/out \
+  ghcr.io/sraisl/polyscan:latest sbom /code -o /out/bom.json
+```
+
+Or build the image locally (no publish needed):
+
+```bash
+docker build -t polyscan:local .
+docker run --rm -v $(pwd):/code polyscan:local scan /code --format md
+```
+
 ### GitHub Action
 
 ```yaml
-- uses: your-org/polyscan@v1
+- uses: sraisl/polyscan@main
   with:
+    target: "."
+    engines: "semgrep,bandit,eslint"
+    format: "sarif"
+# then upload to code scanning:
+- uses: github/codeql-action/upload-sarif@v4
+  with:
+    sarif_file: polyscan.sarif
+```
     target: "."
     engines: "semgrep,bandit,eslint,spotbugs"
     format: "sarif"
