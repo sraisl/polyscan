@@ -44,18 +44,19 @@ runs:
     - name: Sync PolyScan + engines (uv, locked)
       shell: bash
       run: |
-        uv sync --frozen --extra scan
-        uv pip install --system .
-        npm install -g eslint@8
-        # optional Java engine (needs JDK; install via apt if missing)
+        set -x
+        uv sync --frozen --extra scan 2>&1 | tail -10
+        uv pip install --system . 2>&1 | tail -5
+        npm install -g eslint@8 2>&1 | tail -3 || echo "eslint install failed"
         if ! which java >/dev/null 2>&1; then
           sudo apt-get update && sudo apt-get install -y openjdk-21-jdk-headless || echo "java install failed"
         fi
-        polyscan download-engines || echo "spotbugs assets unavailable — skipping"
+        polyscan download-engines 2>&1 | tail -5 || echo "spotbugs assets unavailable — skipping"
 
     - name: Run PolyScan
       shell: bash
       run: |
+        set -x
         polyscan scan "${{ inputs.target }}" \
           -e "${{ inputs.engines }}" \
           --format "${{ inputs.format }}" \
@@ -64,7 +65,17 @@ runs:
           --max-critical "${{ inputs.max-critical }}" \
           --max-high "${{ inputs.max-high }}" \
           --max-medium "${{ inputs.max-medium }}" \
-          ${{ inputs.gate == 'true' && '--gate' || '--no-gate' }}
+          ${{ inputs.gate && '--gate' || '--no-gate' }}
+        echo "POLYSCAN_EXIT=$?"
+
+    - name: Upload debug artifacts
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: polyscan-debug
+        path: |
+          polyscan.sarif
+          polyscan-summary.md
 
     - name: Write Job Summary
       if: always()
