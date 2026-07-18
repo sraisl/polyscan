@@ -1,0 +1,29 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "polyscan"
+version = "0.1.0"
+description = "Lightweight multi-language SAST & code-quality orchestrator — a self-hosted SonarQube alternative."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "AGPL-3.0" }
+authors = [{ name = "Stefan Raisl" }]
+keywords = ["sast", "security", "static-analysis", "code-quality", "devsecops"]
+dependencies = [
+    "click>=8.1",
+    "pydantic>=2.0",
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+scan = ["semgrep", "bandit", "eslint"]
+
+[project.scripts]
+polyscan = "polyscan.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["polyscan"]

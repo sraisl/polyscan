@@ -1,0 +1,32 @@
+rules:
+  - id: dangerous-subprocess-shell-true
+    severity: ERROR
+    languages: [python]
+    message: Use of subprocess with shell=True is a security risk (shell injection).
+    metadata:
+      cwe: "CWE-78"
+    patterns:
+      - pattern: subprocess.$FUNC(..., shell=True, ...)
+
+  - id: use-of-eval
+    severity: ERROR
+    languages: [python, javascript]
+    message: Avoid eval() — code injection risk.
+    metadata:
+      cwe: "CWE-95"
+    patterns:
+      - pattern: eval(...)
+
+  - id: hardcoded-secret
+    severity: ERROR
+    languages: [generic]
+    message: Possible hardcoded secret/credential.
+    patterns:
+      - pattern-regex: '(?i)(api[_-]?key|secret|token|password)\s*[:=]\s*["][A-Za-z0-9]{16,}["]'
+
+  - id: sql-string-concat
+    severity: WARNING
+    languages: [python, javascript]
+    message: Possible SQL injection via string concatenation.
+    patterns:
+      - pattern-regex: '(?i)(execute|query)\(.*\+.*\)'

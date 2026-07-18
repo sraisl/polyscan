@@ -1,0 +1,31 @@
+name: "PolyScan"
+description: "Lightweight multi-language SAST scan (Semgrep, Bandit, ESLint) with Quality Gate"
+author: "Stefan Raisl"
+branding:
+  icon: "shield"
+  color: "red"
+
+inputs:
+  target:
+    description: "Path to scan (default: repo root)"
+    required: false
+    default: "."
+  engines:
+    description: "Comma-separated engines (semgrep,bandit,eslint)"
+    required: false
+    default: "semgrep,bandit,eslint"
+  format:
+    description: "Report format (md, json, table)"
+    required: false
+    default: "md"
+
+runs:
+  using: "docker"
+  image: "docker://ghcr.io/your-org/polyscan:latest"
+  args:
+    - "scan"
+    - ${{ inputs.target }}
+    - "-e"
+    - ${{ inputs.engines }}
+    - "--format"
+    - ${{ inputs.format }}
