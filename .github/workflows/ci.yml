@@ -19,11 +19,19 @@ jobs:
 
   polyscan:
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write   # needed to upload SARIF
+      contents: read
     steps:
       - uses: actions/checkout@v4
-      - name: PolyScan self-scan
+      - name: PolyScan self-scan (SARIF)
         uses: sraisl/polyscan@main
         with:
           target: "."
           engines: "semgrep,bandit,eslint"
-          format: "md"
+          format: "sarif"
+          upload-sarif: "true"
+      - name: Upload SARIF to GitHub code scanning
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: polyscan.sarif

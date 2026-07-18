@@ -19,22 +19,35 @@ def cli() -> None:
 
 @cli.command()
 @click.argument("target", type=click.Path(exists=True, path_type=Path))
-@click.option("--engines", "-e", multiple=True, help="Engines to run (semgrep, bandit, eslint)")
-@click.option("--format", "fmt", type=click.Choice(["md", "json", "table"]), default="md")
+@click.option("--engines", "-e", multiple=True, help="Engines to run (semgrep, bandit, eslint, spotbugs)")
+@click.option("--format", "fmt", type=click.Choice(["md", "json", "table", "sarif"]), default="md")
+@click.option("--output", "-o", type=click.Path(path_type=Path), default=None,
+              help="Write report to file (e.g. polyscan.sarif)")
 @click.option("--gate/--no-gate", default=True, help="Apply Quality Gate (exit 1 on fail)")
-def scan(target: Path, engines: tuple[str, ...], fmt: str, gate: bool) -> None:
+def scan(target: Path, engines: tuple[str, ...], fmt: str, output: Path | None, gate: bool) -> None:
     """Scan TARGET and report normalized findings."""
     selected = list(engines) if engines else None
     results = run_engines(target, selected)
     findings = all_findings(results)
 
     if fmt == "json":
-        click.echo(json.dumps([f.model_dump() for f in findings], indent=2, default=str))
+        text = json.dumps([f.model_dump() for f in findings], indent=2, default=str)
     elif fmt == "table":
-        for f in findings:
-            click.echo(f"{f.severity.value.upper():8} {f.engine:8} {f.file}:{f.line}  {f.rule_id}")
+        lines = [f"{f.severity.value.upper():8} {f.engine:8} {f.file}:{f.line}  {f.rule_id}"
+                 for f in findings]
+        text = "\n".join(lines)
+    elif fmt == "sarif":
+        from polyscan.core.sarif import build_sarif
+        text = json.dumps(build_sarif(findings, target), indent=2)
     else:
-        click.echo(render_md(results, findings))
+        text = render_md(results, findings)
+
+    if output:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(text)
+        click.echo(f"Report written to {output}")
+    else:
+        click.echo(text)
 
     if gate and findings:
         g = QualityGate()
@@ -69,6 +82,26 @@ def render_md(results, findings) -> str:
     for f in sorted(findings, key=lambda x: -x.severity.rank):
         lines.append(f.to_md())
     return "\n".join(lines)
+
+
+@cli.command()
+@click.argument("target", type=click.Path(exists=True, path_type=Path))
+@click.option("--output", "-o", type=click.Path(path_type=Path), default=None,
+              help="Write SBOM to file (e.g. bom.json)")
+def sbom(target: Path, output: Path | None) -> None:
+    """Generate a CycloneDX SBOM from dependency manifests in TARGET."""
+    import json
+
+    from polyscan.core.sbom import build_sbom
+
+    bom = build_sbom(target)
+    text = json.dumps(bom, indent=2)
+    if output:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(text)
+        click.echo(f"SBOM ({len(bom['components'])}) written to {output}")
+    else:
+        click.echo(text)
 
 
 @cli.command()

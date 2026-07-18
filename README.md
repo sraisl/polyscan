@@ -37,6 +37,12 @@ polyscan scan ./myrepo -e bandit -e eslint
 
 # JSON for CI / SARIF pipelines
 polyscan scan ./myrepo --format json
+
+# SARIF (GitHub code scanning compatible) -> file
+polyscan scan ./myrepo --format sarif -o polyscan.sarif
+
+# CycloneDX SBOM from dependency manifests
+polyscan sbom ./myrepo -o bom.json
 ```
 
 ### GitHub Action
@@ -45,7 +51,8 @@ polyscan scan ./myrepo --format json
 - uses: your-org/polyscan@v1
   with:
     target: "."
-    engines: "semgrep,bandit,eslint"
+    engines: "semgrep,bandit,eslint,spotbugs"
+    format: "sarif"
 ```
 
 ## Quality Gate

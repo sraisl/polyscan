@@ -1,5 +1,5 @@
 name: "PolyScan"
-description: "Lightweight multi-language SAST scan (Semgrep, Bandit, ESLint) with Quality Gate"
+description: "Lightweight multi-language SAST scan (Semgrep, Bandit, ESLint, SpotBugs) with Quality Gate + SARIF"
 author: "Stefan Raisl"
 branding:
   icon: "shield"
@@ -11,13 +11,17 @@ inputs:
     required: false
     default: "."
   engines:
-    description: "Comma-separated engines (semgrep,bandit,eslint)"
+    description: "Comma-separated engines (semgrep,bandit,eslint,spotbugs)"
     required: false
     default: "semgrep,bandit,eslint"
   format:
-    description: "Report format (md, json, table)"
+    description: "Report format (md, json, sarif)"
     required: false
-    default: "md"
+    default: "sarif"
+  upload-sarif:
+    description: "Upload SARIF to GitHub code scanning"
+    required: false
+    default: "true"
 
 runs:
   using: "docker"
@@ -29,3 +33,5 @@ runs:
     - ${{ inputs.engines }}
     - "--format"
     - ${{ inputs.format }}
+    - "-o"
+    - "polyscan.sarif"
