@@ -31,6 +31,6 @@ jobs:
           engines: "semgrep,bandit,eslint"
           format: "sarif"
       - name: Upload SARIF to GitHub code scanning
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: polyscan.sarif
