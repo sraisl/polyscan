@@ -104,21 +104,35 @@ docker run --rm -v $(pwd):/code polyscan:local scan /code --format md
 
 ### GitHub Action
 
+PolyScan ships as a reusable Action (Docker-based, image from GHCR). Drop it into any workflow:
+
 ```yaml
-- uses: sraisl/polyscan@main
-  with:
-    target: "."
-    engines: "semgrep,bandit,eslint"
-    format: "sarif"
-# then upload to code scanning:
-- uses: github/codeql-action/upload-sarif@v4
-  with:
-    sarif_file: polyscan.sarif
+jobs:
+  polyscan:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write   # upload SARIF to code scanning
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: PolyScan self-scan
+        uses: sraisl/polyscan@main
+        with:
+          target: "."
+          engines: "semgrep,bandit,eslint"   # add "spotbugs" for Java/Kotlin
+          format: "sarif"
+
+      - name: Upload SARIF to GitHub code scanning
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: polyscan.sarif
 ```
-    target: "."
-    engines: "semgrep,bandit,eslint,spotbugs"
-    format: "sarif"
-```
+
+Notes:
+- The Action pulls `ghcr.io/sraisl/polyscan:latest` (auto-built & pushed by this repo's CI on every `main` push).
+- Pin to a release tag (e.g. `sraisl/polyscan@v1`) if you want Dependabot to keep it updated — `@main` is not tracked by Dependabot.
+- Add `spotbugs` to `engines` for Java/Kotlin (needs a JDK on the runner; the action installs one if missing).
 
 ## Quality Gate
 
@@ -139,7 +153,9 @@ uvicorn polyscan.server:app --port 8000
 
 ## Roadmap
 
-- [ ] SARIF export (GitHub Code Scanning compatible)
+- [x] SARIF export (GitHub Code Scanning compatible)
+- [x] CycloneDX SBOM
+- [x] Docker image published to GHCR
 - [ ] Historical trends dashboard (per-branch/per-repo)
 - [ ] More engines: golangci-lint, PMD, hadolint, Trivy (IaC)
 - [ ] GitHub PR-Comment bot
